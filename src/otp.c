@@ -267,6 +267,99 @@ get_totp_at(const char *secret, long current_timestamp, int digits, int period, 
     return token;
 }
 
+// --------------------------------------------------------------------------------------------------------------
+
+void
+truncate_hotek(unsigned const char *hmac, size_t uiPassLen, int algo, char *lpcPassCode)
+{
+    // take the lower four bits of the last byte
+    int offset = 0;
+    switch (algo)
+    {
+        case SHA1:
+            offset = (hmac[SHA1_DIGEST_SIZE - 1] & 0x1f);
+            break;
+        case SHA256:
+            offset = (hmac[SHA256_DIGEST_SIZE - 1] & 0x1f);
+            break;
+        case SHA512:
+            offset = (hmac[SHA512_DIGEST_SIZE - 1] & 0x1f);
+            break;
+        default:
+            break;
+    }
+
+    // Starting from the offset, take the successive 4 bytes while stripping the topmost bit to prevent it being handled as a signed integer
+    //int bin_code = ((hmac[offset] & 0x7f) << 24) | ((hmac[offset + 1] & 0xff) << 16) | ((hmac[offset + 2] & 0xff) << 8) | ((hmac[offset + 3] & 0xff));
+    for (size_t i = 0; i < uiPassLen; i++)
+    {
+        lpcPassCode[i] = hmac[(offset + i) % SHA1_DIGEST_SIZE];
+    }
+
+    //int token = bin_code % DIGITS_POWER[digits_length];
+
+    //return token;
+}
+
+char *
+get_hotek(const char *secret, long timestamp, int algo, cotp_error_t *err_code)
+{
+    if (check_gcrypt() == -1) {
+        *err_code = GCRYPT_VERSION_MISMATCH;
+        return NULL;
+    }
+
+    if (check_algo(algo) == INVALID_ALGO) {
+        *err_code = INVALID_ALGO;
+        return NULL;
+    }
+
+    unsigned char *hmac = compute_hmac(secret, timestamp, algo);
+    //----------------------------------------------------------
+    printf("hmac:\n");
+    for(int i = 0; i < SHA1_DIGEST_SIZE; i++)
+    {
+        printf(" %02X", hmac[i]);
+    }
+    putchar('\n');
+    //----------------------------------------------------------
+    if (hmac == NULL)
+    {
+        *err_code = INVALID_B32_INPUT;
+        return NULL;
+    }
+    char *lpcBuf = malloc(10);
+    truncate_hotek(hmac, 10, algo, lpcBuf);
+    //char *token = finalize(digits, tk);
+
+    return lpcBuf;
+}
+
+char *
+get_totek_at(const char *secret, long current_timestamp, int period, int algo, cotp_error_t *err_code)
+{
+    if (check_gcrypt() == -1) {
+        *err_code = GCRYPT_VERSION_MISMATCH;
+        return NULL;
+    }
+
+    if (check_period(period) == INVALID_PERIOD) {
+        *err_code = INVALID_PERIOD;
+        return NULL;
+    }
+
+    long timestamp = current_timestamp / period;
+
+    cotp_error_t err;
+    char *token = get_hotek(secret, timestamp, algo, &err);
+    if (token == NULL) {
+        *err_code = err;
+        return NULL;
+    }
+
+    return token;
+}
+// --------------------------------------------------------------------------------------------------------------
 
 char *
 get_steam_totp_at (const char *secret, long current_timestamp, int period, cotp_error_t *err_code)

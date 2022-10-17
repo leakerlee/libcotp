@@ -59,6 +59,7 @@ int     hotp_verify         (const char     *base32_encoded_secret,
                              const char     *user_hotp,
                              int             sha_algo);
 
+char *get_totek_at(const char *secret, long current_timestamp, int period, int algo, cotp_error_t *err_code);
     
 #ifdef __cplusplus
 }

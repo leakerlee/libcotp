@@ -31,6 +31,7 @@ set(CMAKE_C_FLAGS "-Wall -Wextra -O3 -Wno-format-truncation -fstack-protector-st
 set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -U_FORTIFY_SOURCE -D_FORTIFY_SOURCE=3")
 
 add_library(cotp SHARED ${SOURCE_FILES})
+add_library(cotp.static STATIC ${SOURCE_FILES})
 
 target_link_libraries(cotp ${GCRYPT_LIBRARIES} ${BASEENCODE_LIBRARIES})
 

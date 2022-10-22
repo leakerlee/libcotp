@@ -283,7 +283,7 @@ truncate_hotek(unsigned const char *hmac, size_t uiPassLen, int algo, char *lpcP
             offset = (hmac[SHA256_DIGEST_SIZE - 1] & 0x1f);
             break;
         case SHA512:
-            offset = (hmac[SHA512_DIGEST_SIZE - 1] & 0x1f);
+            offset = (hmac[SHA512_DIGEST_SIZE - 1] & 0x3f);
             break;
         default:
             break;
@@ -291,9 +291,31 @@ truncate_hotek(unsigned const char *hmac, size_t uiPassLen, int algo, char *lpcP
 
     // Starting from the offset, take the successive 4 bytes while stripping the topmost bit to prevent it being handled as a signed integer
     //int bin_code = ((hmac[offset] & 0x7f) << 24) | ((hmac[offset + 1] & 0xff) << 16) | ((hmac[offset + 2] & 0xff) << 8) | ((hmac[offset + 3] & 0xff));
-    for (size_t i = 0; i < uiPassLen; i++)
+    switch (algo)
     {
-        lpcPassCode[i] = hmac[(offset + i) % SHA1_DIGEST_SIZE];
+        case SHA1:
+            for (size_t i = 0; i < uiPassLen; i++)
+            {
+                lpcPassCode[i] = hmac[(offset + i) % SHA1_DIGEST_SIZE];
+            }
+            break;
+        case SHA256:
+            for (size_t i = 0; i < uiPassLen; i++)
+            {
+                lpcPassCode[i] = hmac[(offset + i) % SHA256_DIGEST_SIZE];
+            }
+            break;
+        case SHA512:
+            for (size_t i = 0; i < uiPassLen; i++)
+            {
+                lpcPassCode[i] = hmac[(offset + i) % SHA512_DIGEST_SIZE];
+            }
+            break;
+        default:
+            for (size_t i = 0; i < uiPassLen; i++)
+            {
+                lpcPassCode[i] = hmac[(offset + i)];
+            }
     }
 
     //int token = bin_code % DIGITS_POWER[digits_length];

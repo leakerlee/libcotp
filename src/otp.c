@@ -338,12 +338,14 @@ get_hotek(const char *secret, long timestamp, int algo, cotp_error_t *err_code)
 
     unsigned char *hmac = compute_hmac(secret, timestamp, algo);
     //----------------------------------------------------------
+    /*
     printf("hmac:\n");
     for(int i = 0; i < SHA1_DIGEST_SIZE; i++)
     {
         printf(" %02X", hmac[i]);
     }
     putchar('\n');
+    */
     //----------------------------------------------------------
     if (hmac == NULL)
     {
